@@ -1,0 +1,77 @@
+# ======================
+#   Fullstack Blog .gitignore
+# ======================
+
+# Dependencies
+node_modules/
+.pnp/
+.pnp.js
+
+# Next.js build outputs
+.next/
+out/
+.swc/
+
+# Production builds
+build/
+dist/
+
+# Environment variables (quan trọng!)
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory used by tools like istanbul
+coverage/
+*.lcov
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Editor & IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Backend specific (Express)
+backend/data.json          # Nếu sau này bạn lưu dữ liệu vào file
+backend/*.log
+
+# Temporary / debug files
+*.tmp
+*.temp
+
+# Vercel / Deployment
+.vercel
+
+# TypeScript cache
+*.tsbuildinfo
+
+# Optional: If you use Docker later
+.dockerignore
+Dockerfile
+.docker/
