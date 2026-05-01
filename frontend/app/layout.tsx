@@ -1,3 +1,4 @@
+import { Toaster } from 'react-hot-toast';
 export default function RootLayout({
   children,
 }: {
@@ -7,6 +8,7 @@ export default function RootLayout({
     <html lang="vi">
       <body>
         {children}
+        <Toaster position="top-right" />
       </body>
     </html>
   )
