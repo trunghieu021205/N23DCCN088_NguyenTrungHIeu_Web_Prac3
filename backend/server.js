@@ -39,6 +39,28 @@ app.get('/api/posts', (req, res) => {
   res.json(posts);
 });
 
+app.post('/api/posts', (req, res) => {
+  const { title, content, author } = req.body;
+
+  // Validation
+  if (!title || !content || !author) {
+    return res.status(400).json({ error: 'Thiếu dữ liệu' });
+  }
+
+  const newPost = {
+    id: Date.now(),
+    title,
+    content,
+    author,
+    createdAt: new Date().toISOString()
+  };
+
+  posts.push(newPost);
+
+  res.status(201).json(newPost);
+});
+
 app.listen(PORT, () => {
   console.log(`✅ Backend Express chạy tại http://localhost:${PORT}`);
 });
+
