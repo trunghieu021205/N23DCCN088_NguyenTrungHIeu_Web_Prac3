@@ -60,6 +60,12 @@ app.post('/api/posts', (req, res) => {
   res.status(201).json(newPost);
 });
 
+app.use((req, res, next) => {
+  console.log(`${req.method} ${req.url}`);
+  console.log('BODY:', req.body);
+  next();
+});
+
 app.listen(PORT, () => {
   console.log(`✅ Backend Express chạy tại http://localhost:${PORT}`);
 });
