@@ -1,5 +1,5 @@
 'use client'
-
+import api from '@/lib/api'
 import { useState, useEffect } from 'react'
 
 type Post = {
@@ -10,78 +10,73 @@ type Post = {
 }
 
 export default function PostsPage() {
-  const [posts, setPosts] = useState<Post[]>([])
-  const [title, setTitle] = useState('')
-  const [content, setContent] = useState('')
-  const [author, setAuthor] = useState('')
+    const [posts, setPosts] = useState<Post[]>([])
+    const [title, setTitle] = useState('')
+    const [content, setContent] = useState('')
+    const [author, setAuthor] = useState('')
 
-  const fetchPosts = async () => {
-    const res = await fetch('http://localhost:5000/api/posts')
-    const data = await res.json()
-    setPosts(data)
-  }
-
-  useEffect(() => {
-    fetchPosts()
-  }, [])
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-
-    const res = await fetch('http://localhost:5000/api/posts', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ title, content, author }),
-    })
-
-    if (res.ok) {
-      setTitle('')
-      setContent('')
-      setAuthor('')
-      fetchPosts()
-    } else {
-      const err = await res.json()
-      console.error(err.error)
+    const fetchPosts = async () => {
+        const res = await fetch('http://localhost:5000/api/posts')
+        const data = await res.json()
+        setPosts(data)
     }
-  }
 
-  return (
-    <div>
-      <h1>Posts</h1>
+    useEffect(() => {
+        fetchPosts()
+    }, [])
 
-      <form onSubmit={handleSubmit}>
-        <input
-          value={title}
-          onChange={e => setTitle(e.target.value)}
-          placeholder="Tiêu đề"
-        />
-        <br />
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault()
 
-        <textarea
-          value={content}
-          onChange={e => setContent(e.target.value)}
-          placeholder="Nội dung"
-        />
-        <br />
+        try {
+            await api.post('/api/posts', { title, content, author })
 
-        <input
-          value={author}
-          onChange={e => setAuthor(e.target.value)}
-          placeholder="Tác giả"
-        />
-        <br />
+            setTitle('')
+            setContent('')
+            setAuthor('')
+            fetchPosts()
+        } catch (err: any) {
+            console.error(err.response?.data?.error)
+        }
+    }
 
-        <button type="submit">Đăng bài</button>
-      </form>
+    return (
+        <div>
+            <h1>Posts</h1>
 
-      <hr />
+            <form onSubmit={handleSubmit}>
+            <input
+                value={title}
+                onChange={e => setTitle(e.target.value)}
+                placeholder="Tiêu đề"
+            />
+            <br />
 
-      {posts.map(p => (
-        <div key={p.id}>
-          <h3>{p.title}</h3>
-          <p>{p.author} — {p.content}</p>
+            <textarea
+                value={content}
+                onChange={e => setContent(e.target.value)}
+                placeholder="Nội dung"
+            />
+            <br />
+
+            <input
+                value={author}
+                onChange={e => setAuthor(e.target.value)}
+                placeholder="Tác giả"
+            />
+            <br />
+
+            <button type="submit">Đăng bài</button>
+            </form>
+
+            <hr />
+
+            {posts.map(p => (
+            <div key={p.id}>
+                <h3>{p.title}</h3>
+                <p>{p.author} — {p.content}</p>
+            </div>
+            ))}
         </div>
-      ))}
-    </div>
-  )
+    )
 }
