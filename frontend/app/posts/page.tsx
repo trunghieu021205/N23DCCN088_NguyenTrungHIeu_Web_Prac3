@@ -1,5 +1,6 @@
 'use client'
 import api from '@/lib/api'
+import toast from 'react-hot-toast'
 import { useState, useEffect } from 'react'
 
 type Post = {
@@ -28,17 +29,17 @@ export default function PostsPage() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
 
-        try {
-            await api.post('/api/posts', { title, content, author })
+        await toast.promise(
+            api.post('/api/posts', { title, content, author }),
+            {
+            loading: 'Đang lưu...',
+            success: 'Lưu thành công!',
+            error: 'Có lỗi xảy ra!',
+            }
+        )
 
-            setTitle('')
-            setContent('')
-            setAuthor('')
-            fetchPosts()
-        } catch (err: any) {
-            console.error(err.response?.data?.error)
+        fetchPosts()
         }
-    }
 
     return (
         <div>
