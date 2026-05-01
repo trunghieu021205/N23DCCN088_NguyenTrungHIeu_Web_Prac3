@@ -63,6 +63,7 @@ app.post('/api/posts', (req, res) => {
 app.delete('/api/posts/:id', (req, res) => {
   const id = Number(req.params.id);
   const index = posts.findIndex(p => p.id === id);
+  console.log('DELETE HIT:', req.params.id);
 
   if (index === -1) {
     return res.status(404).json({ error: 'Không tìm thấy bài viết' });

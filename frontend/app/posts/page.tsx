@@ -39,7 +39,25 @@ export default function PostsPage() {
         )
 
         fetchPosts()
+    }
+
+    const handleDelete = async (id: number) => {
+        if (!confirm('Bạn chắc chắn muốn xoá bài viết này?')) return;
+
+        try {
+            console.log('DELETE URL:', `/api/posts/${id}`)
+            
+            await api.delete(`/api/posts/${id}`);
+
+            // optimistic update
+            setPosts(prev => prev.filter(p => p.id !== id));
+
+            toast.success('Đã xoá bài viết');
+        } catch (err) {
+            toast.error('Xoá thất bại, thử lại!');
+            fetchPosts(); // rollback
         }
+    }
 
     return (
         <div>
@@ -75,7 +93,13 @@ export default function PostsPage() {
             {posts.map(p => (
             <div key={p.id}>
                 <h3>{p.title}</h3>
-                <p>{p.author} — {p.content}</p>
+                    <p>{p.author} — {p.content}</p>
+                    <button
+                    onClick={() => handleDelete(p.id)}
+                    className="text-red-500 hover:text-red-700"
+                    >
+                    Xoá
+                    </button>
             </div>
             ))}
         </div>
