@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import api from '@/lib/api'
 import toast from 'react-hot-toast'
+import EditPostModal from '@/components/EditPostModal'
 
 type Post = {
   id: number
@@ -17,6 +18,7 @@ export default function PostsPage() {
   const [content, setContent] = useState('')
   const [author, setAuthor] = useState('')
   const [loading, setLoading] = useState(false)
+  const [editingPost, setEditingPost] = useState<Post | null>(null)
 
   const fetchPosts = async () => {
     try {
@@ -68,7 +70,7 @@ export default function PostsPage() {
   return (
     <div className="min-h-screen bg-gray-50 py-10">
       <div className="max-w-2xl mx-auto px-4">
-
+        
         {/* HEADER */}
         <h1 className="text-3xl font-bold mb-8 text-center">
           📝 Blog Mini
@@ -143,15 +145,39 @@ export default function PostsPage() {
                 </p>
               </div>
 
-              <button
-                onClick={() => handleDelete(p.id)}
-                className="ml-4 px-3 py-1 text-sm bg-red-100 text-red-600 rounded hover:bg-red-200"
-              >
-                Xoá
-              </button>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setEditingPost(p)}
+                  className="px-3 py-1 bg-yellow-100 text-yellow-700 rounded hover:bg-yellow-200"
+                >
+                  Sửa
+                </button>
+
+                <button
+                  onClick={() => handleDelete(p.id)}
+                  className="px-3 py-1 text-sm bg-red-100 text-red-600 rounded hover:bg-red-200"
+                >
+                  Xoá
+                </button>
+              </div>
             </div>
           ))}
         </div>
+
+        {/* MODAL (đặt ngoài map 🔥) */}
+        {editingPost && (
+          <EditPostModal
+            post={editingPost}
+            onClose={() => setEditingPost(null)}
+            onUpdated={(updatedPost) => {
+              setPosts(prev =>
+                prev.map(p =>
+                  p.id === updatedPost.id ? updatedPost : p
+                )
+              )
+            }}
+          />
+        )}
 
       </div>
     </div>

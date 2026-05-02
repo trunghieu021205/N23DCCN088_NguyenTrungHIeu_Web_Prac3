@@ -74,6 +74,19 @@ app.delete('/api/posts/:id', (req, res) => {
   res.json({ message: 'Đã xoá thành công' });
 });
 
+app.put('/api/posts/:id', (req, res) => {
+  const id = Number(req.params.id)
+  const index = posts.findIndex(p => p.id === id)
+
+  if (index === -1) {
+    return res.status(404).json({ error: 'Không tìm thấy' })
+  }
+
+  posts[index] = { ...posts[index], ...req.body }
+
+  res.json(posts[index])
+})
+
 app.use((req, res, next) => {
   console.log(`${req.method} ${req.url}`);
   console.log('BODY:', req.body);
