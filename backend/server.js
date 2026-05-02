@@ -16,73 +16,78 @@ app.use(cors({
 
 app.use(express.json());
 
-// Dữ liệu tạm (in-memory)
-let posts = [
-  { 
-    id: 1, 
-    title: 'Bài viết đầu tiên', 
-    content: 'Nội dung bài viết 1', 
-    author: 'Admin',
-    createdAt: new Date().toISOString()
-  },
-  { 
-    id: 2, 
-    title: 'Hướng dẫn NextJS + Express', 
-    content: 'Nội dung bài viết 2', 
-    author: 'Admin',
-    createdAt: new Date().toISOString()
-  }
-];
+const fs = require('fs').promises
+const PATH = './data.json'
+
+async function readData() {
+  const raw = await fs.readFile(PATH, 'utf-8')
+  return JSON.parse(raw)
+}
+
+async function writeData(data) {
+  await fs.writeFile(PATH, JSON.stringify(data, null, 2))
+}
 
 // Routes
-app.get('/api/posts', (req, res) => {
-  res.json(posts);
-});
+app.get('/api/posts', async (req, res) => {
+  const posts = await readData()
+  res.json(posts)
+})
 
-app.post('/api/posts', (req, res) => {
-  const { title, content, author } = req.body;
+app.post('/api/posts', async (req, res) => {
+  const { title, content, author } = req.body
 
-  // Validation
   if (!title || !content || !author) {
-    return res.status(400).json({ error: 'Thiếu dữ liệu' });
+    return res.status(400).json({ error: 'Thiếu dữ liệu' })
   }
+
+  const posts = await readData()
 
   const newPost = {
     id: Date.now(),
     title,
     content,
     author,
-    createdAt: new Date().toISOString()
-  };
-
-  posts.push(newPost);
-
-  res.status(201).json(newPost);
-});
-
-app.delete('/api/posts/:id', (req, res) => {
-  const id = Number(req.params.id);
-  const index = posts.findIndex(p => p.id === id);
-  console.log('DELETE HIT:', req.params.id);
-
-  if (index === -1) {
-    return res.status(404).json({ error: 'Không tìm thấy bài viết' });
+    createdAt: new Date().toISOString(),
   }
 
-  posts.splice(index, 1);
+  posts.push(newPost)
+  await writeData(posts)
 
-  res.json({ message: 'Đã xoá thành công' });
-});
+  res.status(201).json(newPost)
+})
 
-app.put('/api/posts/:id', (req, res) => {
+app.delete('/api/posts/:id', async (req, res) => {
   const id = Number(req.params.id)
+
+  const posts = await readData()
+  const filtered = posts.filter(p => p.id !== id)
+
+  if (posts.length === filtered.length) {
+    return res.status(404).json({ error: 'Không tìm thấy' })
+  }
+
+  await writeData(filtered)
+
+  res.json({ message: 'Đã xoá' })
+})
+
+app.put('/api/posts/:id', async (req, res) => {
+  const id = Number(req.params.id)
+
+  const posts = await readData()
   const index = posts.findIndex(p => p.id === id)
 
   if (index === -1) {
     return res.status(404).json({ error: 'Không tìm thấy' })
   }
 
-  posts[index] = { ...posts[index], ...req.body }
+  posts[index] = {
+    ...posts[index],
+    ...req.body,
+  }
+
+  await writeData(posts)
 
   res.json(posts[index])
 })
