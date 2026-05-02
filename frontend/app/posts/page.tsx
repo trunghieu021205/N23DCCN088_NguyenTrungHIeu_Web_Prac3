@@ -1,6 +1,11 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+} from '@tanstack/react-query'
 import api from '@/lib/api'
 import toast from 'react-hot-toast'
 import EditPostModal from '@/components/EditPostModal'
@@ -13,65 +18,67 @@ type Post = {
 }
 
 export default function PostsPage() {
-  const [posts, setPosts] = useState<Post[]>([])
+  const queryClient = useQueryClient()
+
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
   const [author, setAuthor] = useState('')
-  const [loading, setLoading] = useState(false)
   const [editingPost, setEditingPost] = useState<Post | null>(null)
 
-  const fetchPosts = async () => {
-    try {
-      setLoading(true)
-      const res = await api.get('/api/posts')
-      setPosts(res.data)
-    } catch {
-      toast.error('Không thể tải dữ liệu')
-    } finally {
-      setLoading(false)
-    }
-  }
+  //  GET
+  const { data: posts = [], isLoading } = useQuery({
+    queryKey: ['posts'],
+    queryFn: () => api.get('/api/posts').then(res => res.data),
+  })
 
-  useEffect(() => {
-    fetchPosts()
-  }, [])
+  //  CREATE
+  const createMutation = useMutation({
+    mutationFn: (data: Omit<Post, 'id'>) =>
+      api.post('/api/posts', data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['posts'] })
+      toast.success('Đăng bài thành công!')
+    },
+  })
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  //  DELETE
+  const deleteMutation = useMutation({
+    mutationFn: (id: number) =>
+      api.delete(`/api/posts/${id}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['posts'] })
+      toast.success('Đã xoá bài viết')
+    },
+  })
+
+  //  UPDATE
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: number; data: Omit<Post, 'id'> }) =>
+      api.put(`/api/posts/${id}`, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['posts'] })
+      toast.success('Cập nhật thành công!')
+    },
+  })
+
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-
-    await toast.promise(
-      api.post('/api/posts', { title, content, author }),
-      {
-        loading: 'Đang đăng...',
-        success: 'Đăng bài thành công!',
-        error: 'Có lỗi xảy ra!',
-      }
-    )
+    createMutation.mutate({ title, content, author })
 
     setTitle('')
     setContent('')
     setAuthor('')
-    fetchPosts()
   }
 
-  const handleDelete = async (id: number) => {
+  const handleDelete = (id: number) => {
     if (!confirm('Bạn chắc chắn muốn xoá?')) return
-
-    try {
-      await api.delete(`/api/posts/${id}`)
-      setPosts(prev => prev.filter(p => p.id !== id))
-      toast.success('Đã xoá bài viết')
-    } catch {
-      toast.error('Xoá thất bại')
-      fetchPosts()
-    }
+    deleteMutation.mutate(id)
   }
 
   return (
     <div className="min-h-screen bg-gray-50 py-10">
       <div className="max-w-2xl mx-auto px-4">
-        
-        {/* HEADER */}
+
         <h1 className="text-3xl font-bold mb-8 text-center">
           📝 Blog Mini
         </h1>
@@ -87,75 +94,61 @@ export default function PostsPage() {
             value={title}
             onChange={e => setTitle(e.target.value)}
             placeholder="Tiêu đề"
-            className="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
+            className="w-full border px-3 py-2 rounded"
           />
 
           <textarea
             value={content}
             onChange={e => setContent(e.target.value)}
             placeholder="Nội dung"
-            className="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
+            className="w-full border px-3 py-2 rounded"
           />
 
           <input
             value={author}
             onChange={e => setAuthor(e.target.value)}
             placeholder="Tác giả"
-            className="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
+            className="w-full border px-3 py-2 rounded"
           />
 
           <button
             type="submit"
-            className="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600 transition"
+            disabled={createMutation.isPending}
+            className="w-full bg-blue-500 text-white py-2 rounded"
           >
-            Đăng bài
+            {createMutation.isPending ? 'Đang đăng...' : 'Đăng bài'}
           </button>
         </form>
 
         {/* LOADING */}
-        {loading && (
+        {isLoading && (
           <p className="text-center text-gray-400">Đang tải...</p>
         )}
 
-        {/* EMPTY */}
-        {!loading && posts.length === 0 && (
-          <p className="text-center text-gray-400">
-            Chưa có bài viết nào
-          </p>
-        )}
-
-        {/* LIST POSTS */}
+        {/* LIST */}
         <div className="space-y-4">
-          {posts.map(p => (
+          {posts.map((p: Post) => (
             <div
               key={p.id}
-              className="bg-white p-4 rounded-xl shadow-sm flex justify-between items-start"
+              className="bg-white p-4 rounded-xl shadow-sm flex justify-between"
             >
               <div>
-                <h3 className="font-semibold text-lg">
-                  {p.title}
-                </h3>
-
-                <p className="text-sm text-gray-500 mb-2">
-                  {p.author}
-                </p>
-
-                <p className="text-gray-700">
-                  {p.content}
-                </p>
+                <h3 className="font-semibold">{p.title}</h3>
+                <p className="text-sm text-gray-500">{p.author}</p>
+                <p>{p.content}</p>
               </div>
 
               <div className="flex gap-2">
                 <button
                   onClick={() => setEditingPost(p)}
-                  className="px-3 py-1 bg-yellow-100 text-yellow-700 rounded hover:bg-yellow-200"
+                  className="px-3 py-1 bg-yellow-100 text-yellow-700 rounded hover:bg-yellow-200 cursor-pointer"
                 >
                   Sửa
                 </button>
 
                 <button
                   onClick={() => handleDelete(p.id)}
-                  className="px-3 py-1 text-sm bg-red-100 text-red-600 rounded hover:bg-red-200"
+                  className="px-3 py-1 bg-red-100 text-red-600 rounded hover:bg-red-200 cursor-pointer"
                 >
                   Xoá
                 </button>
@@ -164,21 +157,20 @@ export default function PostsPage() {
           ))}
         </div>
 
-        {/* MODAL (đặt ngoài map 🔥) */}
+        {/* MODAL */}
         {editingPost && (
           <EditPostModal
             post={editingPost}
             onClose={() => setEditingPost(null)}
-            onUpdated={(updatedPost) => {
-              setPosts(prev =>
-                prev.map(p =>
-                  p.id === updatedPost.id ? updatedPost : p
-                )
-              )
+            onSubmit={(data) => {
+              updateMutation.mutate({
+                id: editingPost.id,
+                data,
+              })
+              setEditingPost(null)
             }}
           />
         )}
-
       </div>
     </div>
   )

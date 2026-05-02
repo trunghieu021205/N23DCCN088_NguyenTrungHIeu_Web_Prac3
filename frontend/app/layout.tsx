@@ -1,7 +1,6 @@
-import { Toaster } from 'react-hot-toast';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import './globals.css';
-const queryClient = new QueryClient()
+import './globals.css'
+import Providers from './providers'
+import { Toaster } from 'react-hot-toast'
 
 export default function RootLayout({
   children,
@@ -11,10 +10,10 @@ export default function RootLayout({
   return (
     <html lang="vi">
       <body>
-        <QueryClientProvider client={queryClient}>
+        <Providers>
           {children}
           <Toaster position="top-right" />
-        </QueryClientProvider>
+        </Providers>
       </body>
     </html>
   )
